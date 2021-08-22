@@ -7,7 +7,8 @@ https://calendar.google.com/calendar/u/0?cid=dWRkajl2ZXNpdGozaWd2bGgzNmprcWQ0azh
 
 This is the format for the nacalendarbot.cfg file, that handles authentication with the google and reddit APIs.
 You can configure the necessary id's and keys for google under https://console.developers.google.com/apis/. 
-You also need a client_secret.json for google, and an oauth.ini for reddit.
+You also need a credentials.json and token.json for google.  The code will create these for you first time through,
+but you will need a browser to successfully sign onto google before it creates them.
 
 [Google]
 client_id =
