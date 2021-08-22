@@ -1,15 +1,19 @@
 This is the automated calendarbot of /r/NeonAnarchy.  It's a significantly modified version of the bot performing the
 same function for /r/RunnerHub. (Full credit to /u/Ucuri from post: https://www.reddit.com/r/RunnerHub/comments/2qt9yv/calendar_bot_v2/)
 
-This bot picks up job postings and adds them to this google calendar:
+This bot picks up job postings from reddit's /r/NeonAnarchy and adds them to this Google calendar:
 
 https://calendar.google.com/calendar/u/0?cid=dWRkajl2ZXNpdGozaWd2bGgzNmprcWQ0azhAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ
 
-This is the format for the nacalendarbot.cfg file, that handles authentication with the google and reddit APIs.
-You can configure the necessary id's and keys for google under https://console.developers.google.com/apis/. 
-You also need a credentials.json and token.json for google.  The code will create these for you first time through,
-but you will need a browser to successfully sign onto google before it creates them.
+Running the bot:
 
+To run the bot, you will need a nacalendarbot.cfg file, that configures authentication with the google and reddit APIs.
+Two other files (credentials.json and token.json) are also required for the bot to run, but will be created first time
+through.  (See build notes below.)
+
+Create an empty nacalendarbot.cfg file, cutting/pasting in the following items.  Modify as required.
+
+---[ cut/paste ]---
 [Google]
 client_id =
 client_secret =
@@ -20,11 +24,13 @@ client_secret =
 username =
 password =
 user_agent = /r/NeonAnarchy JobCalendarBot (by /u/NAnarchyCalendarBot)
+---[ end cut/paste ]---
 
-To build in your development environment:
+To run the project in your development environment:
 
-1) Ensure you have python 3.8.6+ installed.  This code has been also been tested on python 3.9.6.
-2) Sign into reddit using the account under which the bot will run.  (eg. NAnarchyCalendarBot)
+1) Ensure you have python 3.8.6+ installed.  This bot has been also been tested on python 3.9.6.
+    a) You will need to import referenced modules using pip.  I'm not including instructions for that here.
+2) Sign into reddit using the account under which the bot will run. (eg. NAnarchyCalendarBot)
     a) Configure the [Reddit] username and password with this account information.
 3) Follow the instructions here (https://www.pythonforengineers.com/build-a-reddit-bot-part-1/) to setup a reddit app;
     a) This will give you the [Reddit] client_id and client_secret values;
@@ -35,15 +41,15 @@ IDs (credentials).
 
 Once done - you will have everything read-to-go!
 
-From there, start by running the unit tests (nacalendarbot_test.py) which, first-time-through will authorise your
-bot with google and will create the token.json and credentials.json files in your working directory.  This will spawn
-a browser, so I recommend doing it on a developer workstation, rather than your hosting environment before copying
-those files to your host.
+From there, start by running the unit tests (nacalendarbot_test.py) which will, first-time-through, authorise your
+bot with google and will create the required token.json and credentials.json files in your working directory.  This
+process will spawn a browser to do the oauth2 authorisation step, so I recommend doing it on a developer workstation
+copying those files to your host.
 
-Invoking the bot itself is just a matter of running the nacalendarbot.py script.  I do this via the scheduler on my
-synology NAS using the following script:
+Invoking the bot itself is just a matter of running the nacalendarbot.py script.  I do this in my own environment via
+the scheduler on my synology NAS using the following script:
 
---
+---[ cut/paste ]---
 #!/bin/bash
 
 # Change working directory to scripts folder (token/creds handling)
@@ -54,6 +60,6 @@ echo calendarbot ran at  `date` >> /var/services/homes/calendarbot/logs/calendar
 
 # Go!
 /usr/local/bin/python3 /var/services/homes/calendarbot/scripts/nacalendarbot.py >> /var/services/homes/calendarbot/logs/calendarbot.log 2>&1 &
---
+---[ end cut/paste ]---
 
 Enjoy!
