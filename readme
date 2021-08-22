@@ -39,7 +39,7 @@ To run the project in your development environment:
 IDs (credentials).
     a) This process will provide the [Google] client_id and client_secret values.
 
-Once done - you will have everything read-to-go!
+Once done - you will have everything ready-to-go!
 
 From there, start by running the unit tests (nacalendarbot_test.py) which will, first-time-through, authorise your
 bot with google and will create the required token.json and credentials.json files in your working directory.  This
