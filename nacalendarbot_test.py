@@ -2,8 +2,9 @@ import unittest
 
 from nacalendarbot import RedditClient, GoogleClient, Job
 
-TEST_REDDIT = False
-TEST_GOOGLE = False
+# Test selectors for partial test runs
+TEST_REDDIT = True
+TEST_GOOGLE = True
 TEST_PARSING = True
 
 
