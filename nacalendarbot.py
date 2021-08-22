@@ -484,8 +484,9 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here](http
                     # next submission
                     continue
 
+                # Success! Post comment to Job thread with link to calendar.
                 try:
-                    # Update the reddit post with the calendar bot info
+                    # Update or create the calendar nofitication post.
                     self.redditClient.post_comment(submission, NeonAnarchyCalendarBot.TEMPLATE_NOTIFICATION)
 
                 except Exception as e:
