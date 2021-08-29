@@ -14,21 +14,24 @@ from googleapiclient.discovery import build
 # configure script logging
 logging.basicConfig(level=logging.INFO)
 
+# Configuration constants
+COMMON = 'Common'
+REDDIT = 'Reddit'
+GOOGLE = 'Google'
 
 # Reddit client - use to manipulate Reddit.
 class RedditClient:
 
-    def __init__(self, client_id, client_secret, username, password, user_agent):
+    def __init__(self, client_id, client_secret, username, password, user_agent, subreddit):
         self.client_id = client_id
         self.client_secret = client_secret
         self.username = username
         self.password = password
         self.user_agent = user_agent
+        self.subreddit = subreddit
 
     @classmethod
     def fromFile(cls, filename):
-        REDDIT = 'Reddit'
-
         config = configparser.ConfigParser()
         config.read(filename)
         return cls(
@@ -36,12 +39,13 @@ class RedditClient:
             config.get(REDDIT, 'client_secret'),
             config.get(REDDIT, 'username'),
             config.get(REDDIT, 'password'),
-            config.get(REDDIT, 'user_agent')
+            config.get(REDDIT, 'user_agent'),
+            config.get(COMMON, 'subreddit')
         )
 
     def release(self):
-        self.reddit = self.client_id = self.client_secret = self.username = self.password = self.user_agent = \
-            self.reddit = None
+        self.client_id = self.client_secret = self.username = self.password = self.user_agent = \
+            self.subreddit = None
 
     # authenticate bot to reddit
     # NOTE: this authentication logic will break if you turn 2FA on for your reddit account.
@@ -241,11 +245,29 @@ class GoogleClient:
     # Google's using ISO date/time format.
     DATE_TIME_FORMAT = "%Y-%m-%dT%H:%M:00"
 
-    def __init__(self):
+    def __init__(self, calendar_id, calendar_public_url, calendar_docs_url, creator, subreddit):
+        self.calendar_id = calendar_id
+        self.calendar_public_url = calendar_public_url
+        self.calendar_docs_url = calendar_docs_url
+        self.creator = creator
+        self.subreddit = subreddit
         self.service = None
 
     def release(self):
-        self.service = None
+        self.calendar_id = self.calendar_public_url = self.calendar_docs_url = self.creator = self.subreddit = \
+            self.service = None
+
+    @classmethod
+    def fromFile(cls, filename):
+        config = configparser.ConfigParser()
+        config.read(filename)
+        return cls(
+            config.get(GOOGLE, 'calendar_id'),
+            config.get(GOOGLE, 'calendar_public_url'),
+            config.get(GOOGLE, 'calendar_docs_url'),
+            config.get(GOOGLE, 'creator'),
+            config.get(COMMON, 'subreddit')
+        )
 
     # retrieve or generate credentials
     def credentials(self, credentials_file):
@@ -285,7 +307,7 @@ class GoogleClient:
 
         eventJson = {
             'summary': '[' + job.get_flair().upper() + ']' + " " + job.title,
-            'location': 'https://reddit.com/r/NeonAnarchy',
+            'location': 'https://reddit.com/r/' + self.subreddit,
             'description': 'https://reddit.com' + job.permalink + ' by ' + job.author,
             'start': {
                 'dateTime': start_datetime.strftime(GoogleClient.DATE_TIME_FORMAT),
@@ -301,7 +323,7 @@ class GoogleClient:
                     'redditPost': job.post_id
                 },
                 'shared': {
-                    'createdBy': 'NeonAnarchyCalendarBot'
+                    'createdBy': self.creator
                 }
             }
         }
@@ -312,13 +334,13 @@ class GoogleClient:
         logging.debug('creating event for post_id: ' + str(job.post_id))
         eventJson = self.build_event_json(job)
         response = self.service.events() \
-            .insert(calendarId='uddj9vesitj3igvlh36jkqd4k8@group.calendar.google.com', body=eventJson).execute()
+            .insert(calendarId=self.calendar_id, body=eventJson).execute()
         logging.debug('Response: ' + str(response))
 
     # find event in calendar using the private properties properties.
     def find_all_events(self, post_id):
         logging.debug('finding all events for post_id: ' + str(post_id))
-        events_response = self.service.events().list(calendarId='uddj9vesitj3igvlh36jkqd4k8@group.calendar.google.com',
+        events_response = self.service.events().list(calendarId=self.calendar_id,
                                                      privateExtendedProperty='redditPost=' + str(post_id)).execute()
         logging.debug('Response: ' + str(events_response))
         events = events_response.get('items', [])
@@ -351,8 +373,7 @@ class GoogleClient:
             logging.info("Updating event: " + event_id)
             eventJson = self.build_event_json(job)
             response = self.service.events() \
-                .update(calendarId='uddj9vesitj3igvlh36jkqd4k8@group.calendar.google.com', eventId=event_id,
-                        body=eventJson).execute()
+                .update(calendarId=self.calendar_id, eventId=event_id, body=eventJson).execute()
             return response
 
         # No need to update.
@@ -370,24 +391,23 @@ class GoogleClient:
             for event in events:
                 logging.debug('deleting event for post_id: ' + str(post_id))
                 response = self.service.events(). \
-                    delete(calendarId='uddj9vesitj3igvlh36jkqd4k8@group.calendar.google.com',
-                           eventId=event['id']).execute()
+                    delete(calendarId=self.calendar_id, eventId=event['id']).execute()
                 logging.debug('response: ' + str(response))
 
 
 # Google client - use to manipulate Google's calendar.
 class NeonAnarchyCalendarBot:
-    TEMPLATE_NOTIFICATION = """Your Job has been posted in the [Neon Anarchy Job Calendar](https://calendar.google.com/calendar/embed?src=uddj9vesitj3igvlh36jkqd4k8%40group.calendar.google.com&ctz=Etc%2FGMT).
+    TEMPLATE_NOTIFICATION = """Your Job has been posted in the [Neon Anarchy Job Calendar]({calendar_public_url}).
 
-Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here](https://docs.google.com/document/d/1jyWrvbXdBkVUkE6r_eM8kGeH40YLrgHUhD2ZsDEjyH4/edit?usp=sharing)."""
+Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({calendar_docs_url})."""
 
-    TEMPLATE_ERROR = """Hi {author}!  I encountered a problem - I was not able to add this job to the [Neon Anarchy Job Calendar](https://calendar.google.com/calendar/embed?src=uddj9vesitj3igvlh36jkqd4k8%40group.calendar.google.com&ctz=Etc%2FGMT).
+    TEMPLATE_ERROR = """Hi {author}!  I encountered a problem - I was not able to add this job to the [Neon Anarchy Job Calendar]({calendar_public_url}).
     
 *Problem:* {problem}
 
 *Solution*: {solution}
     
-Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here](https://docs.google.com/document/d/1jyWrvbXdBkVUkE6r_eM8kGeH40YLrgHUhD2ZsDEjyH4/edit?usp=sharing)."""
+Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({calendar_docs_url})."""
 
     TEMPLATE_PARSE_PROBLEM = "I couldn't work out the title of your post as it didn't match the recommended format."
     TEMPLATE_PARSE_SOLUTION = "Please refer to [this sticky post](https://reddit.com/r/NeonAnarchy/comments/hjq4ji/example_run_metaplot_if_any_name_of_run/) for an example run post. " \
@@ -416,7 +436,7 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here](http
         # Authenticate against Google
         try:
             logging.info('Authenticating to Google.')
-            self.googleClient = GoogleClient()
+            self.googleClient = GoogleClient.fromFile('nacalendarbot.cfg')
             credentials = self.googleClient.credentials('credentials.json')
             self.googleService = self.googleClient.authenticate(credentials)
         except Exception as e:
@@ -452,8 +472,11 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here](http
                     self.redditClient.post_comment(submission,
                                                    NeonAnarchyCalendarBot.TEMPLATE_ERROR.format(
                                                        author='/u/' + submission.author.name,
+                                                       calendar_public_url=self.googleClient.calendar_public_url,
                                                        problem=NeonAnarchyCalendarBot.TEMPLATE_PARSE_PROBLEM,
-                                                       solution=NeonAnarchyCalendarBot.TEMPLATE_PARSE_SOLUTION))
+                                                       solution=NeonAnarchyCalendarBot.TEMPLATE_PARSE_SOLUTION,
+                                                       calendar_docs_url=self.googleClient.calendar_docs_url)
+                                                   )
 
                     # next submission
                     continue
@@ -477,9 +500,12 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here](http
                     self.redditClient.post_comment(submission,
                                                    NeonAnarchyCalendarBot.TEMPLATE_ERROR.format(
                                                        author='/u/' + submission.author.name,
+                                                       calendar_public_url=self.googleClient.calendar_public_url,
                                                        problem=NeonAnarchyCalendarBot.TEMPLATE_GOOGLE_PROBLEM,
                                                        solution=NeonAnarchyCalendarBot.TEMPLATE_GOOGLE_SOLUTION.format(
-                                                           message=str(e))))
+                                                           message=str(e)),
+                                                       calendar_docs_url=self.googleClient.calendar_docs_url)
+                                                   )
 
                     # next submission
                     continue
@@ -487,7 +513,11 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here](http
                 # Success! Post comment to Job thread with link to calendar.
                 try:
                     # Update or create the calendar nofitication post.
-                    self.redditClient.post_comment(submission, NeonAnarchyCalendarBot.TEMPLATE_NOTIFICATION)
+                    self.redditClient.post_comment(
+                        submission, NeonAnarchyCalendarBot.TEMPLATE_NOTIFICATION
+                            .format(calendar_public_url=self.googleClient.calendar_public_url,
+                                    calendar_docs_url=self.googleClient.calendar_docs_url)
+                    )
 
                 except Exception as e:
                     logging.exception('error commenting back to reddit', e)

@@ -55,7 +55,7 @@ class GoogleTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.client = GoogleClient()
+        cls.client = GoogleClient.fromFile('nacalendarbot.cfg')
 
     @classmethod
     def tearDownClass(cls):

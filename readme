@@ -14,9 +14,14 @@ through.  (See build notes below.)
 Create an empty nacalendarbot.cfg file, cutting/pasting in the following items.  Modify as required.
 
 ---[ cut/paste ]---
+[Common]
+subreddit = NeonAnarchy
+
 [Google]
-client_id =
-client_secret =
+calendar_id =
+calendar_public_url =
+calendar_docs_url =
+creator = NeonAnarchyCalendarBot
 
 [Reddit]
 client_id =
@@ -37,7 +42,14 @@ To run the project in your development environment:
 4) Sign into the google that owns the calendar (eg. nacalendarbot@gmail.com).
 5) Follow the instructions here (https://developers.google.com/calendar/api/guides/auth) to create OAuth 2.0 Client
 IDs (credentials).
-    a) This process will provide the [Google] client_id and client_secret values.
+    a) This process will provide the content for the credentials.json file required.
+6) Go to the google calendar that you want to manipulate and grab the calendar_id value and the calendar_public_url
+values.
+    a) calendar_id is of the form: _blah_@group.calendar.google.com
+    b) calendar_public_url is of the form: https://calendar.google.com/calendar/embed?src=uddj9vesitj3igvlh36jkqd4k8%40group.calendar.google.com&ctz=Etc%2FGMT
+        i) Remember to escape all '%' characters in the URL - make '%%'
+7) Update the [Common]/[subreddit] value to the reddit you want the bot to scan.  (eg. NeonAnarchy or NeonRed)
+8) Update the calendar_docs_url to wherever you keep your bot docs.  This value is embedded in each bot notification post.
 
 Once done - you will have everything ready-to-go!
 
