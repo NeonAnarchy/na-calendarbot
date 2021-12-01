@@ -160,7 +160,9 @@ class Job:
         # To cater for this, I've put in an extensible parsing mechanism to cater for completely different regex's.
 
         parsers = {
+            # yyyy-mm-dd
             '(.+?)(\d{4})[-\.\s]+(\d{1,2})[-\.\s]+(\d{1,2})(.*)': Job.parse_anchor_on_short_date,
+            # dd-mm-yyyy
             '(.+?)(\d{1,2})[-\.\s]+(\d{1,2})[-\.\s]+(\d{4})(.*)': Job.parse_anchor_on_short_date_reversed,
         }
 
