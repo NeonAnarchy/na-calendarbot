@@ -14,12 +14,13 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 # configure script logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 # Configuration constants
 COMMON = 'Common'
 REDDIT = 'Reddit'
 GOOGLE = 'Google'
+
 
 # Reddit client - use to manipulate Reddit.
 class RedditClient:
@@ -342,7 +343,7 @@ class GoogleClient:
             .insert(calendarId=self.calendar_id, body=eventJson).execute()
         logging.debug('Response: ' + str(response))
 
-    # find event in calendar using the private properties properties.
+    # find event in calendar using the private properties (reddit post id).
     def find_all_events(self, post_id):
         logging.debug('finding all events for post_id: ' + str(post_id))
         events_response = self.service.events().list(calendarId=self.calendar_id,
@@ -352,7 +353,7 @@ class GoogleClient:
         # TODO - error handling
         return events
 
-    # find event in calendar using the private properties properties.
+    # find event in calendar using the private properties (reddit post id).
     def find_event(self, post_id):
         logging.debug('finding event for post_id: ' + str(post_id))
         events = self.find_all_events(post_id)
@@ -360,6 +361,17 @@ class GoogleClient:
             return events[0]
         else:
             return None
+
+    # find future events in calendar.
+    def find_future_events(self, dt_from):
+        dt_from_string = dt_from.strftime(GoogleClient.DATE_TIME_FORMAT) + 'Z'
+        logging.debug('finding all events after: ' + dt_from_string)
+        events_response = self.service.events().list(calendarId=self.calendar_id, timeMin=dt_from_string,
+                                                     maxResults=50, singleEvents=True, orderBy='startTime').execute()
+        logging.debug('Response: ' + str(events_response))
+        events = events_response.get('items', [])
+        # TODO - error handling
+        return events
 
     # Update event (if required)
     def update_event(self, event, job):
@@ -428,26 +440,10 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
         self.googleClient = None
         self.googleService = None
 
-    def run(self):
-        # Authenticate against Reddit
-        try:
-            logging.info('Authenticating to Reddit.')
-            self.redditClient = RedditClient.fromFile('nacalendarbot.cfg')
-            self.redditService = self.redditClient.authenticate()
-        except Exception as e:
-            logging.exception('unable to authenticate against Reddit', e)
-            return
-
-        # Authenticate against Google
-        try:
-            logging.info('Authenticating to Google.')
-            self.googleClient = GoogleClient.fromFile('nacalendarbot.cfg')
-            credentials = self.googleClient.credentials('credentials.json')
-            self.googleService = self.googleClient.authenticate(credentials)
-        except Exception as e:
-            logging.exception('unable to authenticate against Google', e)
-            return
-
+    #
+    # Iterate over all submissions, creating (or updating) google calendar events.
+    #
+    def process_reddit_submissions(self):
         # read and process all jobs on Reddit
         try:
             logging.info('Reading jobs on NeonAnarchy.')
@@ -537,6 +533,61 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
         except Exception as e:
             logging.exception('error reading NeonAnarchy jobs', e)
             return
+
+    #
+    # Iterate over all submissions, deleting google calendar events if the equivalent reddit post has been deleted.
+    #
+    def cleanup_orphan_events(self):
+        current_time = datetime.datetime.now(timezone.utc)
+        logging.info('Event cleanup from: ' + current_time.strftime(GoogleClient.DATE_TIME_FORMAT))
+        events = self.googleClient.find_future_events(current_time)
+
+        # iterate over events - if the reddit post has been deleted, delete the calendar event.
+        if events is not None:
+            for event in events:
+                reddit_post_id = event['extendedProperties']['private']['redditPost']
+                logging.info("Event:" + event['summary'] + ", reddit post id = " + reddit_post_id)
+
+                # lookup reddit post
+                submission = self.redditService.submission(id=reddit_post_id)
+                if submission.removed_by_category is not None:
+                    logging.info("Message removed: " + submission.removed_by_category + ".  Calendar event deleted.")
+
+                    # delete calendar event
+                    self.googleClient.delete_event(reddit_post_id)
+                else:
+                    logging.info("Message not removed - no action taken.")
+        else:
+            logging.info("No future events retrieved.")
+
+        # Done
+        return
+
+    def run(self):
+        # Authenticate against Reddit
+        try:
+            logging.info('Authenticating to Reddit.')
+            self.redditClient = RedditClient.fromFile('nacalendarbot.cfg')
+            self.redditService = self.redditClient.authenticate()
+        except Exception as e:
+            logging.exception('unable to authenticate against Reddit', e)
+            return
+
+        # Authenticate against Google
+        try:
+            logging.info('Authenticating to Google.')
+            self.googleClient = GoogleClient.fromFile('nacalendarbot.cfg')
+            credentials = self.googleClient.credentials('credentials.json')
+            self.googleService = self.googleClient.authenticate(credentials)
+        except Exception as e:
+            logging.exception('unable to authenticate against Google', e)
+            return
+
+        # Process all reddit submissions
+        self.process_reddit_submissions()
+
+        # Cleanup calendar - remove events if the reddit post has been deleted.
+        self.cleanup_orphan_events()
 
 
 # Bot main loop

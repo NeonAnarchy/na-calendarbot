@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 from nacalendarbot import RedditClient, GoogleClient, Job
@@ -84,10 +85,12 @@ class GoogleTestCase(unittest.TestCase):
 
         # test timezones
         self.parse_and_compare_title('Name of Run. 2021-04-01. 234 UTC.', '', 'Name of Run.', 2021, 4, 1, 2, 34, 'UTC')
-        self.parse_and_compare_title('Name of Run. 2021-04-01. 234 Australia/Sydney', '', 'Name of Run.', 2021, 4, 1, 2, 34, 'Australia/Sydney')
-        self.parse_and_compare_title('Name of Run. 2021-04-01. 234 Australia/Sydney.', '', 'Name of Run.', 2021, 4, 1, 2, 34, 'Australia/Sydney')
+        self.parse_and_compare_title('Name of Run. 2021-04-01. 234 Australia/Sydney', '', 'Name of Run.', 2021, 4, 1, 2,
+                                     34, 'Australia/Sydney')
+        self.parse_and_compare_title('Name of Run. 2021-04-01. 234 Australia/Sydney.', '', 'Name of Run.', 2021, 4, 1,
+                                     2, 34, 'Australia/Sydney')
 
-    # Reddit post data
+        # Reddit post data
         self.parse_and_compare_title('The Land of Mana-Storms and Spiders. 2021-08-11 0010', '',
                                      'The Land of Mana-Storms and Spiders.', 2021, 8, 11, 0, 10, 'UTC')
         self.parse_and_compare_title('297 Meters Under the Seas 2021-8-8 1:00 UTC', '',
@@ -167,7 +170,7 @@ IC prompt (what do you think the object is)
 &#x200B;
 &#x200B;
  *{CALENDAR\_HINT: Kessler syndrome 1 (impromptu) 2021-08-15 19:00 UTC}* 
-""",'', 'Kessler syndrome 1 (impromptu)', 2021, 8, 15, 19, 0, 'UTC')
+""", '', 'Kessler syndrome 1 (impromptu)', 2021, 8, 15, 19, 0, 'UTC')
 
     @unittest.skipUnless(TEST_PARSING, "don't bother with parsing")
     def test_parse_selftext_bad(self):
@@ -236,6 +239,10 @@ MoreBlahblah!""",
         response = self.client.find_event(job.post_id)
         self.assertIsNone(response)
 
+    @unittest.skipUnless(TEST_GOOGLE, "don't test Google")
+    def test_find_future(self):
+        events = self.client.find_future_events(datetime.datetime.utcnow())
+        self.assertIsNotNone(events)
 
 if __name__ == '__main__':
     unittest.main()
