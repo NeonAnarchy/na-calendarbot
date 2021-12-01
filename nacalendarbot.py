@@ -5,6 +5,8 @@ import os
 import re
 import time
 
+from datetime import timezone
+
 import praw
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -233,8 +235,9 @@ class Job:
         return metaplot, name_of_run, year, month, day, hour, minute, timezone
 
     # Return datetime object representing internal date/time state.
+    # TODO: this will always ignore the timezone value and will hardcode UTC.  Expand!
     def get_start_datetime(self):
-        return datetime.datetime(self.year, self.month, self.day, self.hour, self.minute, 0)
+        return datetime.datetime(self.year, self.month, self.day, self.hour, self.minute, 0, 0, tzinfo=timezone.utc)
 
 
 # Google client - use to manipulate Google's calendar.
@@ -397,7 +400,7 @@ class GoogleClient:
 
 # Google client - use to manipulate Google's calendar.
 class NeonAnarchyCalendarBot:
-    TEMPLATE_NOTIFICATION = """Your Job has been posted in the [Neon Anarchy Job Calendar]({calendar_public_url}).
+    TEMPLATE_NOTIFICATION = """Your Job has been posted in the [Neon Anarchy Job Calendar]({calendar_public_url}). In discord, use the following tags to refer to the Job's scheduled time: <t:{run_time}:F> (absolute job date/time) and <t:{run_time}:R> (relative time until the job).   
 
 Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({calendar_docs_url})."""
 
@@ -512,11 +515,15 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
 
                 # Success! Post comment to Job thread with link to calendar.
                 try:
-                    # Update or create the calendar nofitication post.
+                    job_start = job.get_start_datetime()
+                    run_time = int(job_start.timestamp())
+
+                    # Update or create the calendar notification post.
                     self.redditClient.post_comment(
                         submission, NeonAnarchyCalendarBot.TEMPLATE_NOTIFICATION
                             .format(calendar_public_url=self.googleClient.calendar_public_url,
-                                    calendar_docs_url=self.googleClient.calendar_docs_url)
+                                    calendar_docs_url=self.googleClient.calendar_docs_url,
+                                    run_time=run_time)
                     )
 
                 except Exception as e:
