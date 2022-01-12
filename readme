@@ -39,7 +39,7 @@ To run the project in your development environment:
     a) Configure the [Reddit] username and password with this account information.
 3) Follow the instructions here (https://www.pythonforengineers.com/build-a-reddit-bot-part-1/) to setup a reddit app;
     a) This will give you the [Reddit] client_id and client_secret values;
-4) Sign into the google that owns the calendar (eg. nacalendarbot@gmail.com).
+4) Sign into the google account that owns the calendar (eg. nacalendarbot@gmail.com).
 5) Follow the instructions here (https://developers.google.com/calendar/api/guides/auth) to create OAuth 2.0 Client
 IDs (credentials).
     a) This process will provide the content for the credentials.json file required.
