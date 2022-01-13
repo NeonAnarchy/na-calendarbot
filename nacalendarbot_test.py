@@ -202,6 +202,21 @@ MoreBlahblah!""",
             if fail:
                 self.fail("Expected exception not thrown for selftext" + str)
 
+    @unittest.skipUnless(TEST_PARSING, "don't bother with parsing")
+    def test_job_creation(self):
+        # Test job syntactically correct with a hint
+        job = Job('The Prince of the West. 01-22-2022 @ 1800 UTC',
+                  selftext="{CALENDAR_HINT: The Prince of the West. 22-01-2022 @ 1800 UTC}")
+        self.assertEqual([job.year, job.month, job.day], [2022, 1, 22])
+
+        # Test job syntactically correct without hint
+        job = Job('The Prince of the West. 01-22-2022 @ 1800 UTC')
+        self.assertNotEqual([job.year, job.month, job.day], [2022, 1, 22])
+
+        # Test job syntactically incorrect with a hint
+        job = Job('CRAPCRAPCRAP', selftext="{CALENDAR_HINT: The Prince of the West. 22-01-2022 @ 1800 UTC}")
+        self.assertEqual([job.year, job.month, job.day], [2022, 1, 22])
+
     # TODO - refactor - we're relying on test order to populate a class variable.
     @unittest.skipUnless(TEST_GOOGLE, "don't test Google")
     def test_authenticate(self):
@@ -243,6 +258,7 @@ MoreBlahblah!""",
     def test_find_future(self):
         events = self.client.find_future_events(datetime.datetime.utcnow())
         self.assertIsNotNone(events)
+
 
 if __name__ == '__main__':
     unittest.main()

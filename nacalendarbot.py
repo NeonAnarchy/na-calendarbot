@@ -138,12 +138,13 @@ class Job:
         self.edited = edited
 
         try:
-            self.metaplot, self.name_of_run, self.year, self.month, self.day, self.hour, self.minute, self.timezone = \
-                Job.parse_title(title)
-        except Exception:
-            logging.debug('unable to parse title: ' + title)
+            # Parse CALENDAR HINT first (if present).  This allows the hint to override the title - for whatever reason.
             self.metaplot, self.name_of_run, self.year, self.month, self.day, self.hour, self.minute, self.timezone = \
                 Job.parse_selftext(selftext)
+        except Exception:
+            # Parse title.
+            self.metaplot, self.name_of_run, self.year, self.month, self.day, self.hour, self.minute, self.timezone = \
+                Job.parse_title(title)
 
     # getter - handle None values
     def get_flair(self):
