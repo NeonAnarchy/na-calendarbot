@@ -164,8 +164,12 @@ class Job:
         parsers = {
             # yyyy-mm-dd
             '(.+?)(\d{4})[-\.\s]+(\d{1,2})[-\.\s]+(\d{1,2})(.*)': Job.parse_anchor_on_short_date,
+            # 202ymmdd - NOTE: this will fail in 2030. Usability tax. :)
+            '(.+?)(202\d)(\d{2})(\d{2})(.*)': Job.parse_anchor_on_short_date,
             # dd-mm-yyyy
             '(.+?)(\d{1,2})[-\.\s]+(\d{1,2})[-\.\s]+(\d{4})(.*)': Job.parse_anchor_on_short_date_reversed,
+            # ddmm202y - NOTE: this will fail in 2030. Usability tax. :)
+            '(.+?)(\d{2})(\d{2})(202\d)(.*)': Job.parse_anchor_on_short_date_reversed,
         }
 
         for key, value in parsers.items():
@@ -536,7 +540,8 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
             return
 
     #
-    # Iterate over all submissions, deleting google calendar events if the equivalent reddit post has been deleted.
+    # Iterate over all submissions, deleting google calendar events if the equivalent reddit post has been deleted or
+    # flaired META.
     #
     def cleanup_orphan_events(self):
         current_time = datetime.datetime.now(timezone.utc)

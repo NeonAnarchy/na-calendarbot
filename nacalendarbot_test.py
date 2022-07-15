@@ -4,8 +4,8 @@ import unittest
 from nacalendarbot import RedditClient, GoogleClient, Job
 
 # Test selectors for partial test runs
-TEST_REDDIT = True
-TEST_GOOGLE = True
+TEST_REDDIT = False
+TEST_GOOGLE = False
 TEST_PARSING = True
 
 
@@ -82,6 +82,18 @@ class GoogleTestCase(unittest.TestCase):
         # test brackets and braces
         self.parse_and_compare_title('[Metaplot, if any] [Funky other thing] Name of Run. 2021-04-01. 1234 UTC',
                                      'Metaplot, if any', '[Funky other thing] Name of Run.', 2021, 4, 1, 12, 34, 'UTC')
+
+        # test no separators
+        self.parse_and_compare_title('[Metaplot, if any] Deacon Denied Redux 20220711 2359 UTC', 'Metaplot, if any',
+                                     'Deacon Denied Redux', 2022, 7, 11, 23, 59, 'UTC')
+        self.parse_and_compare_title('Deacon Denied Redux 20220711 2359 UTC', '', 'Deacon Denied Redux', 2022, 7, 11, 23, 59, 'UTC')
+        self.parse_and_compare_title('Deacon Denied Redux 20220711 359 UTC', '', 'Deacon Denied Redux', 2022, 7, 11, 3, 59, 'UTC')
+
+        # test no separators
+        self.parse_and_compare_title('[Metaplot, if any] Deacon Denied Redux 11072022 2359 UTC', 'Metaplot, if any',
+                                     'Deacon Denied Redux', 2022, 7, 11, 23, 59, 'UTC')
+        self.parse_and_compare_title('Deacon Denied Redux 11072022 2359 UTC', '', 'Deacon Denied Redux', 2022, 7, 11, 23, 59, 'UTC')
+        self.parse_and_compare_title('Deacon Denied Redux 11072022 359 UTC', '', 'Deacon Denied Redux', 2022, 7, 11, 3, 59, 'UTC')
 
         # test timezones
         self.parse_and_compare_title('Name of Run. 2021-04-01. 234 UTC.', '', 'Name of Run.', 2021, 4, 1, 2, 34, 'UTC')
