@@ -4,8 +4,8 @@ import unittest
 from nacalendarbot import RedditClient, GoogleClient, Job
 
 # Test selectors for partial test runs
-TEST_REDDIT = False
-TEST_GOOGLE = False
+TEST_REDDIT = True
+TEST_GOOGLE = True
 TEST_PARSING = True
 
 
@@ -16,7 +16,7 @@ class RedditTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.client = RedditClient.fromFile('nacalendarbot.cfg')
+        cls.client = RedditClient.fromFile('na/nacalendarbot.cfg')
 
     @classmethod
     def tearDownClass(cls):
@@ -56,7 +56,7 @@ class GoogleTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.client = GoogleClient.fromFile('nacalendarbot.cfg')
+        cls.client = GoogleClient.fromFile('na/nacalendarbot.cfg')
 
     @classmethod
     def tearDownClass(cls):
@@ -232,7 +232,7 @@ MoreBlahblah!""",
     # TODO - refactor - we're relying on test order to populate a class variable.
     @unittest.skipUnless(TEST_GOOGLE, "don't test Google")
     def test_authenticate(self):
-        credentials = self.client.credentials('credentials.json')
+        credentials = self.client.credentials('na','credentials.json')
         self.assertIsNotNone(credentials)
         self.service = self.client.authenticate(credentials)
         self.assertIsNotNone(self.service)

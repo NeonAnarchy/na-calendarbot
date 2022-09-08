@@ -1,7 +1,9 @@
 /orig/
-/credentials*.json
-/last_timestamp_db.cfg.bak
-/last_timestamp_db.cfg.dat
-/last_timestamp_db.cfg.dir
-/nacalendarbot.cfg
-/token*.json
+**/credentials*.json
+**/last_timestamp_db.cfg.bak
+**/last_timestamp_db.cfg.dat
+**/last_timestamp_db.cfg.dir
+**/na/nacalendarbot.cfg
+**/token*.json
+/na/
+/os/
