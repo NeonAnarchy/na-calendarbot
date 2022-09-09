@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from nacalendarbot import RedditClient, GoogleClient, Job
+from calendarbot import RedditClient, GoogleClient, Job
 
 # Test selectors for partial test runs
 TEST_REDDIT = True
