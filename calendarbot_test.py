@@ -16,7 +16,7 @@ class RedditTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.client = RedditClient.fromFile('na/nacalendarbot.cfg')
+        cls.client = RedditClient.from_file('na/nacalendarbot.cfg')
 
     @classmethod
     def tearDownClass(cls):
@@ -56,7 +56,7 @@ class GoogleTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.client = GoogleClient.fromFile('na/nacalendarbot.cfg')
+        cls.client = GoogleClient.from_file('na/nacalendarbot.cfg')
 
     @classmethod
     def tearDownClass(cls):

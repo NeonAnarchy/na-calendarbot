@@ -37,7 +37,7 @@ class RedditClient:
         self.subreddit_name = subreddit_name
 
     @classmethod
-    def fromFile(cls, filename):
+    def from_file(cls, filename):
         config = configparser.ConfigParser()
         config.read(filename)
         return cls(
@@ -76,7 +76,8 @@ class RedditClient:
         return target_subreddit.new(limit=20)
 
     # translate submission to job
-    def to_job(self, submission):
+    @staticmethod
+    def to_job(submission):
         # process the post
 
         # Create job.
@@ -103,7 +104,7 @@ class RedditClient:
 
             # If comment exists, update comment text
             if own_comment:
-                if (text != own_comment.body):
+                if text != own_comment.body:
                     own_comment.edit(text)
                     logging.info("Edited comment on: " + submission.title)
                 else:
@@ -274,7 +275,7 @@ class GoogleClient:
             self.subreddit_name = self.service = None
 
     @classmethod
-    def fromFile(cls, filename):
+    def from_file(cls, filename):
         config = configparser.ConfigParser()
         config.read(filename)
         return cls(
@@ -582,7 +583,7 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
         # Authenticate against Reddit
         try:
             logging.info('Authenticating to Reddit.')
-            self.redditClient = RedditClient.fromFile(config_directory + '/nacalendarbot.cfg')
+            self.redditClient = RedditClient.from_file(config_directory + '/nacalendarbot.cfg')
             self.redditService = self.redditClient.authenticate()
         except Exception as e:
             logging.exception('unable to authenticate against Reddit', e)
@@ -591,7 +592,7 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
         # Authenticate against Google
         try:
             logging.info('Authenticating to Google.')
-            self.googleClient = GoogleClient.fromFile(config_directory + '/nacalendarbot.cfg')
+            self.googleClient = GoogleClient.from_file(config_directory + '/nacalendarbot.cfg')
             credentials = self.googleClient.credentials(config_directory, '/credentials.json')
             self.googleService = self.googleClient.authenticate(credentials)
         except Exception as e:
