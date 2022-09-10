@@ -27,12 +27,14 @@ GOOGLE = 'Google'
 # Reddit client - use to manipulate Reddit.
 class RedditClient:
 
-    def __init__(self, client_id, client_secret, username, password, user_agent, subreddit, subreddit_name):
+    def __init__(self, client_id, client_secret, username, password, user_agent, template_post_link, subreddit,
+                 subreddit_name):
         self.client_id = client_id
         self.client_secret = client_secret
         self.username = username
         self.password = password
         self.user_agent = user_agent
+        self.template_post_link = template_post_link
         self.subreddit = subreddit
         self.subreddit_name = subreddit_name
 
@@ -46,13 +48,14 @@ class RedditClient:
             config.get(REDDIT, 'username'),
             config.get(REDDIT, 'password'),
             config.get(REDDIT, 'user_agent'),
+            config.get(REDDIT, 'template_post_link'),
             config.get(COMMON, 'subreddit'),
             config.get(COMMON, 'subreddit_name')
         )
 
     def release(self):
         self.client_id = self.client_secret = self.username = self.password = self.user_agent = \
-            self.subreddit = self.subreddit_name = None
+            self.subreddit = self.subreddit_name = self.template_post_link = None
 
     # authenticate bot to reddit
     # NOTE: this authentication logic will break if you turn 2FA on for your reddit account.
@@ -440,7 +443,7 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
 Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({calendar_docs_url})."""
 
     TEMPLATE_PARSE_PROBLEM = "I couldn't work out the title of your post as it didn't match the recommended format."
-    TEMPLATE_PARSE_SOLUTION = "Please refer to [this sticky post](https://reddit.com/r/{subreddit}/comments/hjq4ji/example_run_metaplot_if_any_name_of_run/) for an example run post. " \
+    TEMPLATE_PARSE_SOLUTION = "Please refer to [this sticky post](https://reddit.com/r/{subreddit}/{template_post_link}) for an example run post. " \
                               "The title needs to follow the specified format so that I can understand it.  " \
                               "Given we can't modify post titles, you can edit your post and put a calendar hint anywhere into the text of your job - cut/paste/modify the following: *{CALENDAR_HINT: [Metaplot, if any] Name of Run. 2021-08-16. 2300 UTC}*."
 
@@ -486,10 +489,13 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
                     self.redditClient.post_comment(submission,
                                                    CalendarBot.TEMPLATE_ERROR.format(
                                                        author='/u/' + submission.author.name,
-                                                       subreddit_name=self.redditClient.subreddit_name,
                                                        calendar_public_url=self.googleClient.calendar_public_url,
                                                        problem=CalendarBot.TEMPLATE_PARSE_PROBLEM,
-                                                       solution=CalendarBot.TEMPLATE_PARSE_SOLUTION,
+                                                       subreddit_name=self.redditClient.subreddit_name,
+                                                       solution=CalendarBot.TEMPLATE_PARSE_SOLUTION.format(
+                                                           subreddit=self.redditClient.subreddit,
+                                                           template_post_link=self.redditClient.template_post_link
+                                                       ),
                                                        calendar_docs_url=self.googleClient.calendar_docs_url)
                                                    )
 
@@ -583,7 +589,7 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
         # Authenticate against Reddit
         try:
             logging.info('Authenticating to Reddit.')
-            self.redditClient = RedditClient.from_file(config_directory + '/nacalendarbot.cfg')
+            self.redditClient = RedditClient.from_file(config_directory + '/calendarbot.cfg')
             self.redditService = self.redditClient.authenticate()
         except Exception as e:
             logging.exception('unable to authenticate against Reddit', e)
@@ -592,7 +598,7 @@ Calendar bot post.  Any problems, please let /u/kajh know!  Bot [docs here]({cal
         # Authenticate against Google
         try:
             logging.info('Authenticating to Google.')
-            self.googleClient = GoogleClient.from_file(config_directory + '/nacalendarbot.cfg')
+            self.googleClient = GoogleClient.from_file(config_directory + '/calendarbot.cfg')
             credentials = self.googleClient.credentials(config_directory, '/credentials.json')
             self.googleService = self.googleClient.authenticate(credentials)
         except Exception as e:
