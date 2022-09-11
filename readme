@@ -1,21 +1,25 @@
-This is the automated calendarbot of /r/NeonAnarchy.  It's a significantly modified version of the bot performing the
-same function for /r/RunnerHub. (Full credit to /u/Ucuri from post: https://www.reddit.com/r/RunnerHub/comments/2qt9yv/calendar_bot_v2/)
+This is the automated calendarbot of /r/NeonAnarchy and /r/OuroborosSyndicate.  It's a significantly modified version of
+the bot performing the same function for /r/RunnerHub. (Full credit to /u/Ucuri from post:
+https://www.reddit.com/r/RunnerHub/comments/2qt9yv/calendar_bot_v2/)
 
-This bot picks up job postings from reddit's /r/NeonAnarchy and adds them to this Google calendar:
+This bot picks up job postings from reddit's /r/NeonAnarchy or /r/OuroborosSyndicate and adds them to the respective
+Google calendars:
 
-https://calendar.google.com/calendar/u/0?cid=dWRkajl2ZXNpdGozaWd2bGgzNmprcWQ0azhAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ
+NA: https://calendar.google.com/calendar/u/0?cid=dWRkajl2ZXNpdGozaWd2bGgzNmprcWQ0azhAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ
+OS: TODO
 
 Running the bot:
 
-To run the bot, you will need a nacalendarbot.cfg file, that configures authentication with the google and reddit APIs.
+To run the bot, you will need a calendarbot.cfg file, that configures authentication with the google and reddit APIs.
 Two other files (credentials.json and token.json) are also required for the bot to run, but will be created first time
 through.  (See build notes below.)
 
-Create an empty nacalendarbot.cfg file, cutting/pasting in the following items.  Modify as required.
+Create an empty calendarbot.cfg file, cutting/pasting in the following items.  Modify as required.
 
 ---[ cut/paste ]---
 [Common]
 subreddit = NeonAnarchy
+subreddit_name = Neon Anarchy
 
 [Google]
 calendar_id =
@@ -29,6 +33,7 @@ client_secret =
 username =
 password =
 user_agent = /r/NeonAnarchy JobCalendarBot (by /u/NAnarchyCalendarBot)
+template_post_link = comments/hjq4ji/example_run_metaplot_if_any_name_of_run/
 ---[ end cut/paste ]---
 
 To run the project in your development environment:
@@ -48,18 +53,21 @@ values.
     a) calendar_id is of the form: _blah_@group.calendar.google.com
     b) calendar_public_url is of the form: https://calendar.google.com/calendar/embed?src=uddj9vesitj3igvlh36jkqd4k8%40group.calendar.google.com&ctz=Etc%2FGMT
         i) Remember to escape all '%' characters in the URL - make '%%'
-7) Update the [Common]/[subreddit] value to the reddit you want the bot to scan.  (eg. NeonAnarchy or NeonRed)
+7) Update the [Common]/[subreddit] value to the reddit you want the bot to scan.  (eg. NeonAnarchy or OuroborosSyndicate)
+    a) Update the [Common]/[template_post_link] to point to the template post you have provided for GMs.  This is
+       looking for the format: https://reddit.com/r/{subreddit}/{template_post_link}
 8) Update the calendar_docs_url to wherever you keep your bot docs.  This value is embedded in each bot notification post.
 
 Once done - you will have everything ready-to-go!
 
-From there, start by running the unit tests (nacalendarbot_test.py) which will, first-time-through, authorise your
+From there, start by running the unit tests (calendarbot_test.py) which will, first-time-through, authorise your
 bot with google and will create the required token.json and credentials.json files in your working directory.  This
 process will spawn a browser to do the oauth2 authorisation step, so I recommend doing it on a developer workstation and
 copying those files over to your host afterwards.
 
-Invoking the bot itself is just a matter of running the nacalendarbot.py script.  I do this in my own environment via
-the scheduler on my synology NAS using the following script:
+Invoking the bot itself is just a matter of running the calendarbot.py script, passing in a parameter specifying the
+configuration directory.  I do this in my own environment via the scheduler on my synology NAS using the following
+script:
 
 ---[ cut/paste ]---
 #!/bin/bash
@@ -70,8 +78,9 @@ cd /var/services/homes/calendarbot/scripts
 # Dump timestamp into logs as a marker
 echo calendarbot ran at  `date` >> /var/services/homes/calendarbot/logs/calendarbot.log
 
-# Go!
-/usr/local/bin/python3 /var/services/homes/calendarbot/scripts/nacalendarbot.py >> /var/services/homes/calendarbot/logs/calendarbot.log 2>&1 &
+# Go - NA Calendar Bot!
+/usr/local/bin/python3 /var/services/homes/calendarbot/scripts/calendarbot.py /var/services/homes/calendarbot/scripts/na >> /var/services/homes/calendarbot/logs/nacalendarbot.log 2>&1 &
+
 ---[ end cut/paste ]---
 
 Enjoy!
