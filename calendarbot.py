@@ -307,7 +307,8 @@ class GoogleClient:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(credentials_file, GoogleClient.CALENDAR_SCOPES)
+                flow = InstalledAppFlow.from_client_secrets_file(config_directory + '/' + credentials_file,
+                                                                 GoogleClient.CALENDAR_SCOPES)
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
             with open(config_directory + '/token.json', 'w') as token:
