@@ -131,6 +131,7 @@ class RedditClient:
         return None
 
 
+# Job object - used to describe a scheduled run.
 class Job:
 
     def __init__(self, title=None, post_id=None, author=None, selftext=None, url=None, permalink=None, created_utc=None,
