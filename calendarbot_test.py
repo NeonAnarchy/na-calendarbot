@@ -4,8 +4,8 @@ import unittest
 from calendarbot import RedditClient, GoogleClient, Job
 
 # Test selectors for partial test runs
-TEST_REDDIT = True
-TEST_GOOGLE = True
+TEST_REDDIT = False
+TEST_GOOGLE = False
 TEST_PARSING = True
 
 
@@ -216,10 +216,32 @@ MoreBlahblah!""",
 
     @unittest.skipUnless(TEST_PARSING, "don't bother with parsing")
     def test_job_creation(self):
-        # Test job syntactically correct with a hint
+        # Test job syntactically correct (though incorrect - month is invalid) with a hint
         job = Job('The Prince of the West. 01-22-2022 @ 1800 UTC',
                   selftext="{CALENDAR_HINT: The Prince of the West. 22-01-2022 @ 1800 UTC}")
-        self.assertEqual([job.year, job.month, job.day], [2022, 1, 22])
+        self.assertEqual([job.year, job.month, job.day, job.hour, job.minute, int(job.get_start_datetime().timestamp())],
+                         [2022, 1, 22, 18, 0, 1642874400])
+
+        # Test job with timezone offset (canonical/long version)
+        job = Job('The Prince of the West. 22-01-2022 @ 1800 UTC-6')
+        self.assertEqual([job.year, job.month, job.day, job.hour, job.minute, int(job.get_start_datetime().timestamp())],
+                         [2022, 1, 22, 18, 0, 1642896000])
+
+        job = Job('The Prince of the West. 22-01-2022 @ 1800 UTC+0600')
+        self.assertEqual([job.year, job.month, job.day, job.hour, job.minute, int(job.get_start_datetime().timestamp())],
+                         [2022, 1, 22, 18, 0, 1642852800])
+
+        job = Job('The Prince of the West. 22-01-2022 @ 1800 UTC-0600')
+        self.assertEqual([job.year, job.month, job.day, job.hour, job.minute, int(job.get_start_datetime().timestamp())],
+                         [2022, 1, 22, 18, 0, 1642896000])
+
+        job = Job('The Prince of the West. 22-01-2022 @ 1800 UTC-06:00')
+        self.assertEqual([job.year, job.month, job.day, job.hour, job.minute, int(job.get_start_datetime().timestamp())],
+                         [2022, 1, 22, 18, 0, 1642896000])
+
+        job = Job('The Prince of the West. 22-01-2022 @ 1800 UTC-06:30')
+        self.assertEqual([job.year, job.month, job.day, job.hour, job.minute, int(job.get_start_datetime().timestamp())],
+                         [2022, 1, 22, 18, 0, 1642897800])
 
         # Test job syntactically correct without hint
         job = Job('The Prince of the West. 01-22-2022 @ 1800 UTC')

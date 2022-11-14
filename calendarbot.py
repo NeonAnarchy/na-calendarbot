@@ -7,7 +7,7 @@ import os
 import re
 import time
 
-from datetime import timezone
+from datetime import timezone, timedelta
 
 import praw
 from google.auth.transport.requests import Request
@@ -219,7 +219,7 @@ class Job:
     @classmethod
     def parse_time_fragment(cls, time_fragment):
         # Look for 'HHMM Timezone', 'HMM Timezone', 'HH:MM Timezone' or 'H:MM Timezone'.  In all cases, Timezone optional
-        m = re.compile('[^\d]*(\d{1,2}):?(\d\d)\s+?([\w/]+).*').match(time_fragment)
+        m = re.compile('[^\d]*(\d{1,2}):?(\d\d)\s+?(UTC[+\-]?[:\d]+).*').match(time_fragment)
         if m:
             return int(m.group(1)), int(m.group(2)), m.group(3).strip()
 
@@ -254,7 +254,26 @@ class Job:
     # Return datetime object representing internal date/time state.
     # TODO: this will always ignore the timezone value and will hardcode UTC.  Expand!
     def get_start_datetime(self):
-        return datetime.datetime(self.year, self.month, self.day, self.hour, self.minute, 0, 0, tzinfo=timezone.utc)
+        dt = datetime.datetime(self.year, self.month, self.day, self.hour, self.minute, 0, 0, tzinfo=timezone.utc)
+        hours, min = Job.parse_timezone_offset_values(self.timezone)
+        td = timedelta(hours=hours, minutes=min)
+        tz = timezone(td)
+        dt = dt.replace(tzinfo=tz)
+        return dt
+
+    # Return the hours and minutes
+    @classmethod
+    def parse_timezone_offset_values(cls, tz_str):
+        m = re.compile("[Uu][Tt][Cc]([+-][01]?[0-9]):?([0-5][0-9])?").match(tz_str)
+        if m:
+            hour = m.group(1)
+            minute = m.group(2)
+            if not minute:
+                minute = 0
+            return int(hour), int(minute)
+
+        # no offset
+        return 0,0
 
 
 # Google client - use to manipulate Google's calendar.
